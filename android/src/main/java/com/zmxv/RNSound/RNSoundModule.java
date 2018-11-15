@@ -17,6 +17,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.ExceptionsManagerModule;
+import com.facebook.react.modules.core.DeviceEventManagerModule;
 
 import java.io.File;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import android.util.Log;
 public class RNSoundModule extends ReactContextBaseJavaModule implements AudioManager.OnAudioFocusChangeListener {
     Map<Integer, MediaPlayer> playerPool = new HashMap<>();
     ReactApplicationContext context;
+
     final static Object NULL = null;
     String category;
     Boolean mixWithOthers = true;
@@ -44,6 +46,12 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
     @Override
     public String getName() {
         return "RNSound";
+    }
+
+    private void sendEvent(String eventName, Object params) {
+        this.context
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                .emit(eventName, params);
     }
 
     @ReactMethod
@@ -188,7 +196,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
     }
 
     @ReactMethod
-    public void play(final Integer key, final String timeToCall, final Callback callbackOnEnd, final Callback callbackOnStart) {
+    public void play(final Integer key, final String timeToCall, final Callback callbackOnEnd) {
         final MediaPlayer player = this.playerPool.get(key);
         if (player == null) {
             if (callbackOnEnd != null) {
@@ -250,16 +258,20 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
                 @Override
                 public void run() {
                     player.start();
-                    if (callbackOnStart != null) {
-                        callbackOnStart.invoke(String.valueOf(System.currentTimeMillis()));
-                    }
+
+                    WritableMap payload = Arguments.createMap();
+                    payload.putString("timestamp", String.valueOf(System.currentTimeMillis()));
+
+                    sendEvent("RN_SOUND_PLAY_START", payload);
                 }
             }, delay);
         } else {
             player.start();
-            if (callbackOnStart != null) {
-                callbackOnStart.invoke(String.valueOf(System.currentTimeMillis()));
-            }
+
+            WritableMap payload = Arguments.createMap();
+            payload.putString("timestamp", String.valueOf(System.currentTimeMillis()));
+
+            sendEvent("RN_SOUND_PLAY_START", payload);
         }
     }
 
@@ -420,7 +432,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
                     }
                 } else {
                     if (this.wasPlayingBeforeFocusChange) {
-                        this.play(this.focusedPlayerKey, null, null, null);
+                        this.play(this.focusedPlayerKey, null, null);
                         this.wasPlayingBeforeFocusChange = false;
                     }
                 }

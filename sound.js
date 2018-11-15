@@ -60,9 +60,9 @@ Sound.prototype.isLoaded = function() {
   return this._loaded;
 };
 
-Sound.prototype.play = function(onEnd, onStart, timeToStart) {
+Sound.prototype.play = function(onEnd, timeToStart) {
   if (this._loaded) {
-    RNSound.play(this._key, timeToStart, (successfully) => onEnd && onEnd(successfully), (timestamp) => onStart && onStart(timestamp));
+    RNSound.play(this._key, timeToStart, (successfully) => onEnd && onEnd(successfully));
   } else {
     onEnd && onEnd(false);
   }
