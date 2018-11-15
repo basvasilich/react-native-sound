@@ -188,7 +188,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
     }
 
     @ReactMethod
-    public void play(final Integer key, final String timeToCall, final Callback callbackOnEnd) {
+    public void play(final Integer key, final String timeToCall, final Callback callbackOnEnd, final Callback callbackOnStart) {
         final MediaPlayer player = this.playerPool.get(key);
         if (player == null) {
             if (callbackOnEnd != null) {
@@ -250,10 +250,16 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
                 @Override
                 public void run() {
                     player.start();
+                    if (callbackOnStart != null) {
+                        callbackOnStart.invoke(String.valueOf(System.currentTimeMillis()));
+                    }
                 }
             }, delay);
         } else {
             player.start();
+            if (callbackOnStart != null) {
+                callbackOnStart.invoke(String.valueOf(System.currentTimeMillis()));
+            }
         }
     }
 
@@ -414,7 +420,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
                     }
                 } else {
                     if (this.wasPlayingBeforeFocusChange) {
-                        this.play(this.focusedPlayerKey, null, null);
+                        this.play(this.focusedPlayerKey, null, null, null);
                         this.wasPlayingBeforeFocusChange = false;
                     }
                 }
