@@ -103,7 +103,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
                 callbackWasCalled = true;
 
                 WritableMap props = Arguments.createMap();
-                props.putDouble("duration", mp.getDuration() * .001);
+                props.putDouble("duration", mp.getDuration());
                 try {
                     callback.invoke(NULL, props);
                 } catch (RuntimeException runtimeException) {
