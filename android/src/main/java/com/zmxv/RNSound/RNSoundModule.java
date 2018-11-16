@@ -379,10 +379,10 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
     }
 
     @ReactMethod
-    public void setCurrentTime(final Integer key, final Float sec) {
+    public void setCurrentTime(final Integer key, final Integer sec) {
         MediaPlayer player = this.playerPool.get(key);
         if (player != null) {
-            player.seekTo((int) Math.round(sec * 1000));
+            player.seekTo((int) sec, 3);
         }
     }
 
@@ -393,7 +393,7 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
             callback.invoke(-1, false);
             return;
         }
-        callback.invoke(player.getCurrentPosition() * .001, player.isPlaying());
+        callback.invoke(player.getCurrentPosition(), player.isPlaying());
     }
 
     //turn speaker on
