@@ -5,6 +5,7 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.net.Uri;
 import android.media.AudioManager;
 import android.os.Handler;
@@ -443,6 +444,64 @@ public class RNSoundModule extends ReactContextBaseJavaModule implements AudioMa
     @ReactMethod
     public void enable(final Boolean enabled) {
         // no op
+    }
+
+    @ReactMethod
+    public void seekToAndPlay(final Integer key, final Integer miliseconds, final Callback callbackOnEnd) {
+        MediaPlayer player = this.playerPool.get(key);
+        if (player != null) {
+            player.seekTo((int) miliseconds, 3);
+        }
+
+        player.setOnSeekCompleteListener(
+            new OnSeekCompleteListener()
+            {
+                @Override
+                public
+                void onSeekComplete(MediaPlayer player)
+                {
+                    player.start();
+
+                    WritableMap payload = Arguments.createMap();
+                    payload.putString("timestamp", String.valueOf(System.currentTimeMillis()));
+
+                    sendEvent("RN_SOUND_PLAY_START", payload);
+                }
+            }
+        );
+
+        player.setOnCompletionListener(new OnCompletionListener() {
+            boolean callbackWasCalled = false;
+
+            @Override
+            public synchronized void onCompletion(MediaPlayer mp) {
+                if (!mp.isLooping()) {
+                    if (callbackWasCalled) return;
+                    callbackWasCalled = true;
+                    try {
+                        callbackOnEnd.invoke(true);
+                    } catch (Exception e) {
+                        //Catches the exception: java.lang.RuntimeException·Illegal callback invocation from native module
+                    }
+                }
+            }
+        });
+
+        player.setOnErrorListener(new OnErrorListener() {
+            boolean callbackWasCalled = false;
+
+            @Override
+            public synchronized boolean onError(MediaPlayer mp, int what, int extra) {
+                if (callbackWasCalled) return true;
+                callbackWasCalled = true;
+                try {
+                    callbackOnEnd.invoke(true);
+                } catch (Exception e) {
+                    //Catches the exception: java.lang.RuntimeException·Illegal callback invocation from native module
+                }
+                return true;
+            }
+        });
     }
 
     @Override
