@@ -193,6 +193,17 @@ Sound.prototype.setSpeakerphoneOn = function(value) {
   }
 };
 
+Sound.prototype.seekToAndPlay = function(value, onEnd) {
+  if (IsAndroid) {
+    if (this._loaded) {
+      RNSound.seekToAndPlay(this._key, value, (successfully) => onEnd && onEnd(successfully));
+    } else {
+      onEnd && onEnd(false);
+    }
+    return this;
+  }
+}
+
 // ios only
 
 // This is deprecated.  Call the static one instead.
